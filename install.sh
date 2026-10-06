@@ -4,21 +4,20 @@
 #
 #   ./install.sh [APK 路径]
 #
-# 它做四件事：
+# 它做三件事：
 #   1. adb install -r 安装 APK
-#   2. 把 APK 复制到 /data/adb/dshmod/ 并把 LSPosed 的 apk_path 指过去
-#      —— 为什么：开机早期 CE 存储未解锁时读不到 /data/app 里的 APK，
-#         而 system_server 是最早 fork 的进程，会因此错过模块（表现为"动画不生效"）
-#   3. 在 LSPosed 里登记本模块（启用 + 勾 4 个作用域）
-#   4. 提示重启
+#   2. 在 LSPosed 里登记：启用 + 勾 4 个作用域，并把 apk_path 指向【当前真实路径】
+#      （✅ 2026-10-07 实测：**不需要**把 APK 拷到 /data/adb。
+#        以前那一步是为了绕"开机读不到"，但实测证明真因是"db 里的 apk_path 过期"，
+#        普通 /data/app 路径在开机早期就能读到。）
+#   3. 提示重启
 #
-# 前置：设备已 root（su 可用）、已装 LSPosed；设备上最好有 sqlite3
-#       （没有也能装，但第 2/3 步需要你在 LSPosed 界面里手动完成，脚本会提示）
+# 前置：设备已 root（su 可用）、已装 LSPosed；设备上有 sqlite3 才能全自动，
+#       否则脚本会打印手动步骤（在 LSPosed 界面里启用 + 勾作用域即可）
 
 set -uo pipefail
 
 PKG="com.qianxia.HyperAssistant"
-DST="/data/adb/dshmod/hyperassistant.apk"
 DB="/data/adb/lspd/config/modules_config.db"
 ROOT_SCOPE=(system com.miui.personalassistant com.miui.home com.android.systemui)
 
@@ -30,26 +29,23 @@ say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 ok()  { printf '  ✓ %s\n' "$*"; }
 warn(){ printf '  ! %s\n' "$*"; }
 
-say "0/4 检查设备"
+say "0/3 检查设备"
 adb get-state >/dev/null 2>&1 || { echo "✗ 设备未连接（adb devices 看不到）"; exit 1; }
 ok "设备在线：$(adb shell getprop ro.product.model | tr -d '\r')"
 if adb shell su -c true >/dev/null 2>&1; then ok "root 可用"; else warn "拿不到 root —— 第 2/3 步会失败（请先在手机上授权 su）"; fi
 
-say "1/4 安装 APK：$APK"
+say "1/3 安装 APK：$APK"
 adb install -r "$APK" | tail -1
 DEV_APK="$(adb shell pm path $PKG | sed 's/package://' | tr -d '\r')"
 [ -n "$DEV_APK" ] || { echo "✗ 安装后拿不到 APK 路径"; exit 1; }
 ok "已安装：$DEV_APK"
 
-say "2/4 固定到 DE 存储（解决「开机早期读不到」）"
-adb shell su -c "mkdir -p /data/adb/dshmod && cp '$DEV_APK' '$DST' && chmod 644 '$DST'" \
-  && ok "已复制到 $DST" || warn "复制失败（root？）"
+say "2/3 在 LSPosed 里登记（apk_path 指向当前安装路径）"
 
-say "3/4 在 LSPosed 里登记"
 HAVE_SQLITE="$(adb shell su -c 'command -v sqlite3 || true' | tr -d '\r')"
 if [ -n "$HAVE_SQLITE" ]; then
   adb shell su -c "cp '$DB' '$DB.bak.$(date +%s)'" >/dev/null 2>&1 && ok "已备份数据库"
-  SQL="insert or replace into modules(module_pkg_name,apk_path) values('$PKG','$DST');"
+  SQL="insert or replace into modules(module_pkg_name,apk_path) values('$PKG','$DEV_APK');"
   SQL="$SQL insert or replace into modules_state(module_pkg_name,user_id,enabled,scope_request_blocked) values('$PKG',0,1,0);"
   for s in "${ROOT_SCOPE[@]}"; do
     SQL="$SQL insert or replace into scope(module_pkg_name,app_pkg_name,user_id) values('$PKG','$s',0);"
@@ -66,7 +62,7 @@ else
   warn "     把 $DST 的存在告诉 LSPosed（重启即可让它重新读取）"
 fi
 
-say "4/4 完成，请重启手机"
+say "3/3 完成，请重启手机"
 cat <<'TIP'
 
   重启后自证三条（不看界面也能判断）：
