@@ -1,6 +1,5 @@
 # HyperAssistant
 
-![build](https://github.com/xiahaor/HyperAssistant/actions/workflows/build.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![platform](https://img.shields.io/badge/HyperOS-4-ff6900)
 
