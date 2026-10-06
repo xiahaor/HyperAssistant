@@ -1,5 +1,9 @@
 # HyperAssistant
 
+![build](https://github.com/xiahaor/HyperAssistant/actions/workflows/build.yml/badge.svg)
+![license](https://img.shields.io/badge/license-Apache--2.0-blue)
+![platform](https://img.shields.io/badge/HyperOS-4-ff6900)
+
 > 给小米澎湃 OS（HyperOS 4）的「**负一屏**」加上**打开 / 返回过渡动画**的 LSPosed 模块。
 
 **一句话原理**：不自己画动画，而是 hook 系统自己的 **HyperViewScale**（SurfaceFlinger 过渡）引擎，
@@ -107,6 +111,8 @@ export HA_KEY_PASSWORD=******
 
 ## 文档
 
+- **`docs/原理与架构.md`** —— 这东西是怎么工作的（数据流、system_server 为什么必须放行、
+  API 82 兼容垫片、运行期配置、UI 侧的设计取舍、想改代码从哪看起）
 - **`docs/逆向数据与经验.md`** —— 接口/结构数据（libxposed API 102 签名、MIUIx/AGSL uniform 表、
   HVS 与 WMShell 的类名方法、自适应图标规格…）、工程与验证经验、**踩坑速查表**、**未解与证据不足**
   ⚠️ 该文档刻意"不写死"：标 ⚠️ 的是"只在当前版本/设备成立"，标 ❓ 的是"证据不足"。
