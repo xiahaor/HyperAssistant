@@ -94,10 +94,14 @@ export HA_KEY_PASSWORD=******
 **修法**：在 LSPosed 里把 HyperAssistant **关掉、再打开一次**（让它重新记录当前路径）→ 重启。
 日志里的症状是：`Unable to open /data/app/…/base.apk: No such file or directory`。
 
-### 可选：Magisk / KernelSU 模块形态
+### 可选：adb 一键脚本（开发者）
 
-仓库里也提供 `tools/make-magisk.sh`（把构建产物打成系统应用形态的模块 zip）与 `install.sh`（adb 一键）。
-**它们不是必需的** —— 只有在你确实想让模块以系统应用形态驻留、或想脚本化装机时才用。
+```bash
+./install.sh path/to/app-release.apk
+```
+
+它会：安装 APK → 在 LSPosed 里登记（启用 + 勾 4 个作用域 + 把 `apk_path` 指向当前路径）→ 提示重启。
+**不是必需的** —— 只有在你反复装机、想省掉"在 LSPosed 界面里点几下"时才用得上（需要设备已 root、且有 `sqlite3`）。
 
 ## 装完怎么确认真的生效
 
