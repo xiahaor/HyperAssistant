@@ -69,18 +69,43 @@ export HA_KEY_PASSWORD=******
 
 依赖中的 `app/libs/libxposed-api-102.0.0.jar` 为 **compileOnly**（框架运行期自带这些类，dex 里不会再打一份）。
 
-## 安装（三步，**第二步别省**）
+## 安装
 
-1. 安装 APK（`adb install -r` 或手动安装）
-2. **把 APK 复制到 `/data/adb/` 下，并把 LSPosed 数据库里该模块的 `apk_path` 指向这份副本**
+### 方式一：Magisk / KernelSU 模块（**推荐，零命令**）
+
+1. 下载 Release 里的 **`HyperAssistant-magisk-*.zip`**
+2. 在 **Magisk / KernelSU / APatch** 里当作模块刷入
+3. **重启**
+4. LSPosed → 模块 → 启用 **HyperAssistant** → 作用域勾选：
+   `系统框架` · `负一屏 (com.miui.personalassistant)` · `桌面 (com.miui.home)` · `SystemUI`
+5. **再重启一次**
+
+> **为什么推荐这种方式**：模块以**系统应用**形态安装（`/system/app/HyperAssistant/`），
+> LSPosed 在**开机早期就能读到它**。若以普通应用安装（`/data/app/...`），
+> CE 存储解锁前读不到 APK，而 **system_server 是最早 fork 的进程** ⇒ 它会错过模块
+> ⇒ 少了"放行"钩子 ⇒ **动画完全不生效**（表现成"随机不生效"）。
+> 用系统应用形态，这一步的坑从根上没有了。
+
+### 方式二：adb 一键脚本（开发者）
+
+```bash
+./install.sh path/to/app-release.apk
+```
+
+脚本会：安装 APK → 复制到 `/data/adb/dshmod/` 并把 LSPosed 的 `apk_path` 指过去
+→ 登记"启用 + 作用域" → 提示重启。
+（需要设备已 root；设备上若有 `sqlite3` 就全自动，没有则脚本会打印手动步骤）
+
+### 方式三：手动（最麻烦，不推荐）
+
+1. 安装 APK
+2. 把 APK 复制到 `/data/adb/dshmod/`，并让 LSPosed 里该模块的 `apk_path` 指向这份副本：
 
    ```bash
    adb shell su -c 'cp $(pm path com.qianxia.HyperAssistant | sed s/package://) /data/adb/dshmod/hyperassistant.apk'
    adb shell su -c 'chmod 644 /data/adb/dshmod/hyperassistant.apk'
    ```
 
-   > 为什么：开机早期（CE 存储未解锁）LSPosed 读不到 `/data/app/...` 里的 APK，
-   > 而 **system_server 是最早 fork 的进程** ⇒ 它会错过模块。表现是"**随机不生效**"。
 3. 作用域勾选上面那 4 项 ⇒ **重启**
 
 ## 装完怎么确认真的生效
