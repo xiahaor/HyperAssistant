@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application android:name=".App"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher" android:label="HyperAssistant" android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+        <provider
+            android:name="io.github.libxposed.service.XposedProvider"
+            android:authorities="com.dsh.assistantanim3.XposedService"
+            android:exported="true" />
+<!--
+          Xposed / LSPosed 模块声明（libxposed API 102）。两条腿一起走：
+
+          A) 新规范（API 102 读这个），放在 META-INF/xposed/ 下：
+             module.prop      minApiVersion / targetApiVersion / staticScope / description
+             java_init.list   入口类
+             scope.list       作用域
+          B) 老式 meta-data（旧管理器读这个；v2 保留过，这里按 v2 保留）：
+             xposedmodule / xposeddescription / xposedminversion / xposedscope
+
+          ★ 历史雷区：v3 的 manifest 曾把 B) 这几条删掉，原因是当时它们引用了
+            并不存在的 @string/@array 资源（悬空引用）。现在
+            res/values/strings.xml 与 res/values/arrays.xml 已把
+            module_description / xposedscope 真建出来，引用不再悬空。
+            装完必须验证「仍能作为普通应用启动」（见 P1 改动清单）。
+        -->
+
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    
+        <!-- ★ LSPosed 模块识别标记（照 HyperCeiler 的形状 ✓ 逐字同 category ✓）：
+             缺它 LSPosed 2.2.0 的模块列表里**看不到**本模块 ⇒ 不会被注入 ✗（2026-10-06 实证 ✓） -->
+        <activity-alias
+            android:name=".MainActivityXposedEntry"
+            android:targetActivity=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+            </intent-filter>
+        </activity-alias>
+</application>
+</manifest>

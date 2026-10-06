@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ★ 2026-10-04 §EQ：照 v1（能 hook 系统侧的那个模块 ✓）抄：android = 系统进程 ✓ -->
+    <string-array name="xposedscope">
+        <item>com.miui.personalassistant</item>
+        <item>android</item>
+        <item>com.miui.home</item>
+    </string-array>
+    <!-- ★ 传统 xposedscope（与 META-INF/xposed/scope.list 保持一致 ✓） -->
+    <string-array name="xposed_scope">
+        <item>system</item>
+        <item>com.miui.personalassistant</item>
+        <item>com.miui.home</item>
+    </string-array>
+</resources>

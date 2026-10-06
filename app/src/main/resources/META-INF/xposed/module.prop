@@ -1,0 +1,5 @@
+minApiVersion=101
+targetApiVersion=102
+autoHotReload=false
+staticScope=false
+description=HyperAssistant: HyperOS 负一屏过渡动画（主线 alpha 归零逻辑 + libxposed API102 + Compose UI）。

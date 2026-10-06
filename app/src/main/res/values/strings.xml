@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v4 的 App 名（manifest 里 label 仍用字面量，这里是为了 Xposed meta-data 能引用到 -->
+    <string name="app_name">HyperAssistant</string>
+    <!-- ★ 历史雷区：早期 manifest 曾因 meta-data 引用了不存在的 @string 而构建/加载异常。
+         现在把被引用的字符串真的建出来，避免"引用悬空"。 -->
+    <string name="module_description">HyperAssistant · HyperOS 负一屏过渡动画（API102）。</string>
+</resources>
