@@ -76,7 +76,7 @@ export HA_KEY_PASSWORD=******
    `系统框架` · `负一屏 (com.miui.personalassistant)` · `桌面 (com.miui.home)` · `SystemUI`
 3. **重启**
 
-就这样。**不需要**把 APK 拷到 `/data/adb`，也不需要刷 Magisk 模块、不需要命令行。
+就这样。**不需要**把 APK 拷到 `/data/adb`，也不需要命令行。
 
 > 为什么可以这么简单：模块注入 system_server 靠的是 LSPosed 按**已安装包**读取 APK，
 > 普通 `/data/app/...` 路径在开机早期就能读到（`/data/app` 属于设备加密 DE 存储，未解锁也可读）。
