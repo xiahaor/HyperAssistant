@@ -22,17 +22,17 @@
 - **关于页「流光溢彩」背景**（AGSL 运行期着色器）：下滑渐隐为白，离开关于页自动停止渲染
 - **激活状态真实检测**：App 与宿主之间有 PING/PONG 心跳，不是"看模块列表猜"
 - **日志可导出**：一键写进 `Download/dsh-debuglog/`，也可复制到剪贴板
-- **所有结论都有出处**：`docs/逆向数据与经验.md` 记录了接口签名、结构数据、踩坑与未解问题
+- **所有结论都有出处**：`docs/reverse-engineering.md` 记录了接口签名、结构数据、踩坑与未解问题
 
 ## 截图
 
 | 主页（激活状态 / 设备信息 / 日志） | 配置（三个可调参数） |
 |---|---|
-| ![主页](docs/screenshots/01-主页-激活状态.png) | ![配置](docs/screenshots/02-配置-可调参数.png) |
+| ![主页：激活状态 / 设备信息 / 日志](docs/screenshots/01-home.png) | ![配置：三个可调参数](docs/screenshots/02-config.png) |
 
 | 设置（开关分组） | 关于（流光溢彩） |
 |---|---|
-| ![设置](docs/screenshots/03-设置-开关列表.png) | ![关于](docs/screenshots/04-关于-流光溢彩.png) |
+| ![设置：按组分类的开关](docs/screenshots/03-settings.png) | ![关于：流光溢彩背景](docs/screenshots/04-about.png) |
 
 ## 环境要求
 
@@ -43,7 +43,7 @@
 | 作用域 | `system` · `com.miui.personalassistant` · `com.miui.home` · `com.android.systemui` |
 
 > ⚠️ 不同机型 / ROM 版本的系统类名与行为可能不同。本项目大量逻辑依赖**具体类与方法签名**，
-> 换版本很可能需要重新适配 —— 具体依据见 `docs/逆向数据与经验.md`。
+> 换版本很可能需要重新适配 —— 具体依据见 `docs/reverse-engineering.md`。
 
 ## 构建
 
@@ -81,7 +81,7 @@ export HA_KEY_PASSWORD=******
 > 为什么可以这么简单：模块注入 system_server 靠的是 LSPosed 按**已安装包**读取 APK，
 > 普通 `/data/app/...` 路径在开机早期就能读到（`/data/app` 属于设备加密 DE 存储，未解锁也可读）。
 > 本项目早期版本误以为必须把 APK 放到 `/data/adb`，那个结论**已被实测推翻**
-> （见 `docs/逆向数据与经验.md` §2.2）。
+> （见 `docs/reverse-engineering.md` §2.2）。
 
 ### 如果装完动画不生效（先看这一条）
 
@@ -124,7 +124,7 @@ export HA_KEY_PASSWORD=******
 
 ## 已知问题
 
-完整清单见 **[`docs/逆向数据与经验.md` §9](docs/逆向数据与经验.md)**（唯一权威）。当前两条**用户可见**的：
+完整清单见 **[`docs/reverse-engineering.md` §9](docs/reverse-engineering.md)**（唯一权威）。当前两条**用户可见**的：
 
 | # | 症状 | 状态 |
 |---|---|---|
@@ -140,9 +140,9 @@ export HA_KEY_PASSWORD=******
 
 ## 文档
 
-- **`docs/原理与架构.md`** —— 这东西是怎么工作的（数据流、system_server 为什么必须放行、
+- **`docs/architecture.md`** —— 这东西是怎么工作的（数据流、system_server 为什么必须放行、
   API 82 兼容垫片、运行期配置、UI 侧的设计取舍、想改代码从哪看起）
-- **`docs/逆向数据与经验.md`** —— 接口/结构数据（libxposed API 102 签名、MIUIx/AGSL uniform 表、
+- **`docs/reverse-engineering.md`** —— 接口/结构数据（libxposed API 102 签名、MIUIx/AGSL uniform 表、
   HVS 与 WMShell 的类名方法、自适应图标规格…）、工程与验证经验、**踩坑速查表**、**未解与证据不足**
   ⚠️ 该文档刻意"不写死"：标 ⚠️ 的是"只在当前版本/设备成立"，标 ❓ 的是"证据不足"。
 
