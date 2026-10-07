@@ -26,13 +26,21 @@
 
 ## 截图
 
-| 主页（激活状态 / 设备信息 / 日志） | 配置（三个可调参数） |
-|---|---|
-| ![主页：激活状态 / 设备信息 / 日志](docs/screenshots/01-home.png) | ![配置：三个可调参数](docs/screenshots/02-config.png) |
+**主页** —— 激活状态 / 设备信息 / 日志
 
-| 设置（开关分组） | 关于（流光溢彩） |
-|---|---|
-| ![设置：按组分类的开关](docs/screenshots/03-settings.png) | ![关于：流光溢彩背景](docs/screenshots/04-about.png) |
+![主页](docs/screenshots/01-home.png)
+
+**配置** —— 三个可调参数
+
+![配置](docs/screenshots/02-config.png)
+
+**设置** —— 按组分类的开关
+
+![设置](docs/screenshots/03-settings.png)
+
+**关于** —— 流光溢彩背景
+
+![关于](docs/screenshots/04-about.png)
 
 ## 环境要求
 
