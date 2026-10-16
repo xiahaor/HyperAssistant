@@ -6,7 +6,7 @@ android {
     namespace = "com.qianxia.hyperassistant"
     compileSdk = 37
     buildToolsVersion = "35.0.0"
-    defaultConfig { applicationId = "com.qianxia.HyperAssistant"; minSdk = 33; targetSdk = 37; versionCode = 400007; versionName = "4.0.0-alpha7" }
+    defaultConfig { applicationId = "com.qianxia.HyperAssistant"; minSdk = 33; targetSdk = 37; versionCode = 400008; versionName = "4.0.0-alpha8-OS402fix" }
     /*
      * ★★ 为什么 source=1.8 而 target=17（本机环境补丁，不改任何功能）★★
      *

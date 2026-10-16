@@ -98,6 +98,19 @@ public class MainHook implements IXposedHookLoadPackage {
             return;
         }
 
+        // ---- SystemUI 进程：只装"绕过 OS4.0.2.0 Task 级过渡拦截"这一个 hook（§HW10）----
+        // 该 ROM 的 Miui-WindowManager-Shell.jar 里 shouldAbortDispatch 对 Task 级过渡一律
+        // 中止 HyperViewScale 远程过渡（"Skip handler … for task anim"），负一屏打开动画因此失效。
+        if (Targets.SYSTEMUI_PKG.equals(lpparam.packageName)) {
+            L.i(">>> 模块在【SystemUI 进程】里被加载了（装 shouldAbortDispatch 绕过 hook）。");
+            try {
+                SystemUIHooks.install(lpparam.classLoader);
+            } catch (Throwable t) {
+                L.e("SystemUI 侧安装失败", t);
+            }
+            return;
+        }
+
         if (!Targets.PKG.equals(lpparam.packageName)) {
             return;
         }

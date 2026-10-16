@@ -52,6 +52,9 @@ public final class Targets {
     /** 系统桌面。静态分析显示它没有 dex（跑在 HYOS Rust 运行时上），这里放一个诊断入口去真机验证。 */
     public static final String LAUNCHER_PKG = "com.miui.home";
 
+    /** SystemUI（手势/状态栏）。OS4.0.2.0 起它的 WM Shell 会拦掉 Task 级 HyperViewScale 远程过渡（§HW9），这里挂绕过 hook。 */
+    public static final String SYSTEMUI_PKG = "com.android.systemui";
+
     // ---- 动画核心 ----
     public static final String PANE_WINDOW = "com.miui.launcher.overlay.server.pane.SlidingPaneWindow";
     public static final String PANE_TRANSITION = "com.miui.launcher.overlay.server.pane.p";

@@ -47,6 +47,17 @@ public final class Config {
     public static final boolean ENABLE_OPEN_ANIM = true;
 
     /**
+     * OS4.0.2.0 起 SystemUI 的 {@code RemoteTransitionHandlerStubImpl.shouldAbortDispatch}
+     * 对 Task 级过渡一律跳过 HyperViewScale 远程过渡（"Skip handler ... for task anim"），
+     * 负一屏打开应用因此退化成硬切。true = 在 SystemUI 进程里对 HyperViewScale 放行。
+     * 详见 {@link SystemUIHooks}。
+     */
+    public static final boolean ENABLE_SYSTEMUI_ABORT_BYPASS = true;
+
+    /** SystemUI 绕过每次生效都打一行日志（前 N 次）。 */
+    public static final boolean SYSTEMUI_HOOK_VERBOSE = true;
+
+    /**
      * `"overlay"` —— **默认**：我们自己画浮层动画（不碰启动调用，零权限依赖）
      * `"probe"`   —— 只记录工厂返回值，不改行为
      * `"apply"`   —— 用 ActivityOptions 替换启动（**已证实走不通**，留作参考）
