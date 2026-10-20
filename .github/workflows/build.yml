@@ -13,6 +13,14 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 签名密钥（可选）：在仓库 Settings → Secrets and variables → Actions 里配这 4 个，
+    # CI 就会产出【已签名、可直接安装】的 APK；不配则退回 app-release-unsigned.apk。
+    #   KEYSTORE_B64        keystore 文件的 base64（单行）
+    #   KEYSTORE_PASSWORD   keystore 口令
+    #   KEY_ALIAS           key 别名
+    #   KEY_PASSWORD        key 口令（与 keystore 口令相同可留空）
+    env:
+      KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,15 +33,37 @@ jobs:
       - name: 配置 Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: 安装 SDK 组件（compileSdk 37 / build-tools 35.0.0）
+      # compileSdk 37 ⇒ 需要 platforms;android-37。
+      # build-tools 必须 ≥ 36.0.0：AGP 9.4.1 会忽略 35.0.0 并警告
+      # （本机实测：「Build Tools version (35.0.0) is ignored, as it is below the
+      #   minimum supported version (36.0.0)」）。
+      - name: 安装 SDK 组件（compileSdk 37 / build-tools 36.0.0）
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;35.0.0" || \
-          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;35.0.0" --channel=0
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;36.0.0" || \
+          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;36.0.0" --channel=0
+
+      # secrets 不能直接用在 if 里 ⇒ 提升到 job env（见上）后用 env 判断。
+      - name: 解码签名密钥（仅在配置了 secret 时）
+        if: ${{ env.KEYSTORE_B64 != '' }}
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          {
+            echo "HA_KEYSTORE=$RUNNER_TEMP/release.jks"
+            echo "HA_KEYSTORE_PASSWORD=${KEYSTORE_PASSWORD}"
+            echo "HA_KEY_ALIAS=${KEY_ALIAS}"
+            echo "HA_KEY_PASSWORD=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+          } >> "$GITHUB_ENV"
+          echo "✔ 已注入签名配置 ⇒ 本次产出已签名 APK"
 
       - name: 构建（release）
         run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
 
-      # 没有密钥 ⇒ 产出 app-release-unsigned.apk（这是**预期行为**，见 README「构建」）
       - name: 上传产物
         uses: actions/upload-artifact@v4
         with:
@@ -51,17 +81,41 @@ jobs:
           name: HyperAssistant-apk
           path: apk
 
+      # 用 tag 名命名，并把"是否已签名"如实写进 Release 说明（不写死）。
+      - name: 整理文件名 + 生成说明
+        run: |
+          set -euo pipefail
+          APK="$(ls apk/*.apk | head -1)"
+          OUT="apk/HyperAssistant-${GITHUB_REF_NAME}.apk"
+          mv "$APK" "$OUT"
+          echo "ASSET=$OUT" >> "$GITHUB_ENV"
+          if echo "$OUT" | grep -qi unsigned; then
+            {
+              echo '> ⚠️ 本 APK 由 CI 构建，但仓库**未配置签名密钥** ⇒ **未签名**，安装前需自行签名。'
+              echo '>'
+              echo '> ```bash'
+              echo '> apksigner sign --ks your.jks --out signed.apk <本文件>'
+              echo '> ```'
+              echo '> 也可用 MT 管理器等工具签名。'
+            } > body.md
+          else
+            {
+              echo '> ✅ 本 APK 由 CI 自动构建并**已签名**，可直接安装。'
+            } > body.md
+          fi
+          {
+            echo ''
+            echo '### 装机'
+            echo '1. 安装 APK'
+            echo '2. 在 LSPosed 里启用本模块，勾选 4 个作用域（`system` / `com.miui.personalassistant` / `com.miui.home` / `com.android.systemui`）'
+            echo '3. 重启手机'
+            echo ''
+            echo '详见 README；重装后若模块失效，先检查 LSPosed 里该模块的 `apk_path` 是否指向当前安装路径。'
+          } >> body.md
+
       - name: 创建 Release 并附上 APK
         uses: softprops/action-gh-release@v2
         with:
-          files: apk/*.apk
+          files: ${{ env.ASSET }}
+          body_path: body.md
           generate_release_notes: true
-          body: |
-            > ⚠️ 本 Release 里的 APK 由 CI 构建，**未签名**（仓库不含任何私钥）。
-            > 安装前请自行签名，例如：
-            > ```bash
-            > apksigner sign --ks your.jks --out signed.apk app-release-unsigned.apk
-            > ```
-            > 也可以直接用 MT 管理器 / 各类"APK 签名"工具签。
-            >
-            > 装机三步见 README（**第 2 步"把 APK 放到 /data/adb"别省**，否则 system_server 会在开机早期读不到模块）。
