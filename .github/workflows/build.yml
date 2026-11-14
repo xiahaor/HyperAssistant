@@ -30,18 +30,51 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: 配置 Android SDK
-        uses: android-actions/setup-android@v3
-
-      # compileSdk 37 ⇒ 需要 platforms;android-37。
-      # build-tools 必须 ≥ 36.0.0：AGP 9.4.1 会忽略 35.0.0 并警告
-      # （本机实测：「Build Tools version (35.0.0) is ignored, as it is below the
-      #   minimum supported version (36.0.0)」）。
-      - name: 安装 SDK 组件（compileSdk 37 / build-tools 36.0.0）
+      # ⚠ 不再用 android-actions/setup-android：本仓库曾在该步失败（2026-11-15 run 43621901400，
+      #   第 4 步 failure ⇒ 后面全部 skipped）。ubuntu-latest 运行器**已预装** Android SDK，
+      #   官方 runner-images 文档写明：ANDROID_HOME=/usr/local/lib/android/sdk，
+      #   预装 build-tools 34/35/36/37，预装平台含 android-37.0 / 37.1 / 37.2（**没有** android-37）。
+      - name: 显示预装 SDK 状态（诊断）
         run: |
-          yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;36.0.0" || \
-          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;36.0.0" --channel=0
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$SDK"
+          echo "--- platforms:"; ls "$SDK/platforms" 2>/dev/null || true
+          echo "--- build-tools:"; ls "$SDK/build-tools" 2>/dev/null || true
+
+      # compileSdk 37：平台包名在新 SDK 里是 android-37.0/37.1/37.2，逐个尝试（失败不阻断）。
+      # build-tools 必须 ≥ 36.0.0：AGP 9.4.1 会忽略 35.0.0（本机实测该 WARNING）。
+      - name: 补齐 SDK 组件（build-tools 36.0.0 + API 37 平台）
+        run: |
+          set -u
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SM="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SM" ] || SM="$(command -v sdkmanager || true)"
+          echo "sdkmanager=${SM:-<未找到>}  SDK=$SDK"
+          if [ -n "${SM:-}" ] && [ -x "$SM" ]; then
+            yes | "$SM" --licenses >/dev/null 2>&1 || true
+            for p in "platform-tools" "build-tools;36.0.0" "platforms;android-37" \
+                     "platforms;android-37.0" "platforms;android-37.1"; do
+              echo "--- install $p"
+              "$SM" --install "$p" || echo "    (跳过：$p 不可用/已装)"
+            done
+          fi
+          echo "=== 最终 platforms ==="; ls "$SDK/platforms" 2>/dev/null || true
+          echo "=== 最终 build-tools ==="; ls "$SDK/build-tools" 2>/dev/null || true
+
+      # AGP 找的是 platforms/android-37；若只有 android-37.N（新命名）就补一个指向它的软链。
+      - name: 兼容平台目录名（android-37 → 实际 android-37.N）
+        run: |
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          if [ ! -d "$SDK/platforms/android-37" ]; then
+            for cand in "$SDK"/platforms/android-37.*; do
+              [ -d "$cand" ] || continue
+              case "$cand" in *beta*) continue ;; esac
+              echo "→ 软链 $(basename "$cand") => android-37"
+              ln -s "$cand" "$SDK/platforms/android-37" || true
+              break
+            done
+          fi
+          ls -d "$SDK"/platforms/android-37* 2>/dev/null || true
 
       # secrets 不能直接用在 if 里 ⇒ 提升到 job env（见上）后用 env 判断。
       - name: 解码签名密钥（仅在配置了 secret 时）
@@ -62,7 +95,9 @@ jobs:
           echo "✔ 已注入签名配置 ⇒ 本次产出已签名 APK"
 
       - name: 构建（release）
-        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace
 
       - name: 上传产物
         uses: actions/upload-artifact@v4
